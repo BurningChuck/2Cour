@@ -3,8 +3,12 @@
 #include "Shape.h"
 #include <cmath>
 
+// класс четырёхугольника
+//   наследуемся от родительского класса Shape с 4 углами/рёбрами
 class Quadrangle: public Shape<4> {
 private:
+  // статический метод для проверки параллельности прямых
+  //   (каждая задаётся двумя точками)
   static bool areParallel(
     double xA1, double yA1,
     double xA2, double yA2,
@@ -16,6 +20,8 @@ private:
     return fabs(u - v) < 0.001;
   }
 
+  // статический метод для проверки перпендикулярности прямых
+  //   (каждая задаётся двумя точками)
   static bool arePerpendicular(
     double xA1, double yA1,
     double xA2, double yA2,
@@ -28,6 +34,7 @@ private:
   }
 
 public:
+  // статический метод для создания четырёхугольника со случайными точками
   static Quadrangle random() {
      return Quadrangle(
        rand() % 100, rand() % 100,
@@ -37,12 +44,14 @@ public:
      );
   }
 
+  // конструктор по 4ём точкам
   Quadrangle(
     double x1, double y1,
     double x2, double y2,
     double x3, double y3,
     double x4, double y4
   ) : Shape() {
+    // заносим их в массив точек в родительском классе
     vertices[0][0] = x1;
     vertices[0][1] = y1;
     vertices[1][0] = x2;
@@ -53,7 +62,9 @@ public:
     vertices[3][1] = y4;
   }
 
+  // является ли четырёхугольник трапецией
   bool isTrapeze() {
+    // проверяем есть ли пара параллельных противоположных сторон
     for (int i = 0; i < 2; i++) {
       if (
         areParallel(
@@ -67,7 +78,9 @@ public:
     return false;
   }
 
+  // является ли четырёхугольник параллелограммом
   bool isParallelogram() {
+    // проверяем параллельны ли все попарно противоположные стороны
     for (int i = 0; i < 2; i++) {
       if (
         !areParallel(
@@ -81,7 +94,9 @@ public:
     return true;
   }
 
+  // является ли четырёхугольник прямоугольником
   bool isRectangle() {
+    // проверяем перпендикулярны ли все попарно противоположные стороны
     for (int i = 0; i < 2; i++) {
       if (
         !arePerpendicular(
@@ -95,11 +110,15 @@ public:
     return true;
   }
 
+  // является ли четырёхугольник ромбом
   bool isRhombus() {
+    // все стороны одной длины и параллелограмм
     return isHalfRegular() && isParallelogram();
   }
 
+  // является ли четырёхугольник квадратом
   bool isSquare() {
+    // все стороны одной длины и прямоугольник
     return isHalfRegular() && isRectangle();
   }
 };
