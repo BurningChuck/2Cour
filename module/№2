@@ -1,0 +1,48 @@
+[Переслано от Вадим]
+#include<iostream>
+#include<utility>
+#include<list>
+#include<math.h>
+
+using namespace std;
+
+unsigned long long fact(unsigned n){return n<2?1ull:fact(n-1u);}
+
+int f(int n) { return n < 0 ? (int)(pow(n, 5)) % 262 : (fact(n) + n - 1u) % 162; }
+int f(double d) { return (int)(1. / sin(87 * d)) % 362; }
+int f(string s) {
+  int a = 0;
+  for (auto c : s)  if (c <= 'Z' && c >= 'A') a++;
+  return a;
+}
+template<class T1, class T2>
+int f(pair<T1, T2> p) { return (f(p.second) * (f(p.first) + 1))%562; }
+template<class T>
+int f(list<T> v) {
+  int res = 0;
+  for (auto a : v) res += f(a);
+  return res % 862;
+}
+template<class T>
+int f(T n) { return 8002; }
+
+int main() {
+  int a = 1, b = -1;
+  double d = 531.;
+  string s = "strSTR";
+  pair<int, int> p = { 12,5 };
+  list<int> v = { 1,2,3,7,14 };
+  char x = 'x';
+  cout << x << "\t\t| " << "f(x)" << endl;
+  cout << "________________|__________" << endl;
+  cout << b << "\t\t| " << f(b) << endl;
+  cout << a << "\t\t| " << f(a) << endl;
+  cout << d << "\t\t| " << f(d) << endl;
+  cout << s << "\t\t| " << f(s) << endl;
+  cout << '(' << p.first << " " << p.second << ')' << "\t\t| " << f(p) << endl;
+  cout << '{';
+  for (auto e : v)cout << e << ' ';
+  cout << '}' << "\t| " << f(v) << endl;
+  cout << x << "\t\t| " << f(x) << endl;
+  return 0;
+}
