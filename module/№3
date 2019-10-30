@@ -1,0 +1,200 @@
+#include <iostream>
+#include <vector>
+#include <utility>
+#include <algorithm>
+#include <memory>
+
+using namespace std;
+
+static int S = 100;                      //Глобальна змінна яку змінюють деструктори
+int n;
+static int number;                      //Загальна кількість всіх об'єктів
+
+class Base2;                        //Ініціалізація Base2
+
+class Base1                          //Базовий абстрактний
+{
+public:
+  virtual void r() = 0;                  //Чисто віртуальна функція
+  Base1() {}                        //Конструктор
+  ~Base1() { S = 3 * S + n + 20; }            //Деструктор
+  int N;                          //Порядковий номер
+  static vector<pair<int, void*>> v;            //Список об'єктів
+  Base1* base1;                      //Вкладені екземпляри
+  Base2* base2, * base3;                  //
+};
+
+class Base2
+{
+public:
+  virtual void r() = 0;                  //Аналогічно Base1
+  Base2() {}
+  ~Base2() { S = S / 2 - n; }
+  int N;                          
+  static vector<pair<int, void*>>* v;
+  Base1* base1;
+  Base2* base2, * base3;
+};
+
+vector<pair<int, void*>> Base1::v;              //static поля
+vector<pair<int, void*>>* Base2::v= &Base1::v;        //
+
+class Alpha :Base1
+{
+public:
+  void r() {}
+  Alpha();
+  ~Alpha();
+  int N;
+};
+
+Alpha::Alpha()
+{
+  N = ++number;                      //Ініціалізуемо номер N при створенні нового об'єкта і збільшуемо number на 1
+  v.push_back({ 1,this });                //Додаємо в список об'єктів новий об'єкт
+}
+
+Alpha::~Alpha()
+{
+  S = S - 2 * N + 5;
+  number--;
+  n = N;
+}
+
+class Beta :Base1
+{
+public:
+  void r() {}
+  Beta();
+  ~Beta();
+  int N;
+};
+
+Beta::Beta()
+{
+  N = ++number;
+  v.push_back({ 2,this });
+}
+
+Beta::~Beta()
+{
+  S = S - N;
+  number--;
+  n = N;
+}
+
+class Gamma :Base2
+{
+public:
+  void r() {}
+  Gamma();
+  ~Gamma();
+  int N;
+};
+
+Gamma::Gamma()
+{
+  N = ++number;
+  v->push_back({ 3,this });
+}
+
+Gamma::~Gamma()
+{
+  S = S - N;
+  number--;
+  n = N;
+}
+
+class Delta :Base2
+{
+public:
+  Delta();
+  ~Delta();
+  void r() {}
+  int N;
+};
+
+Delta::Delta()
+{
+  N = ++number;
+  v->push_back({ 4,this });
+}
+
+Delta::~Delta()
+{
+  S = S + 3 * N - 20;
+  number--;
+  n = N;
+}
+
+pair<int, int> t(pair<int, void*>& a, pair<int, void*>& b) {//Функція яка кладе 2 int в 1 pair<int, int>
+  int N1, N2;
+  if (a.first == 1)N1 = ((Alpha*)a.second)->N;
+  if (a.first == 2)N1 = ((Beta*)a.second)->N;
+  if (a.first == 3)N1 = ((Gamma*)a.second)->N;
+  if (a.first == 4)N1 = ((Delta*)a.second)->N;
+
+  if (b.first == 1)N2 = ((Alpha*)b.second)->N;
+  if (b.first == 2)N2 = ((Beta*)b.second)->N;
+  if (b.first == 3)N2 = ((Gamma*)b.second)->N;
+  if (b.first == 4)N2 = ((Delta*)b.second)->N;
+  pair<int, int> N;
+  N.first = N1;
+  N.second = N2;
+  return N;
+}
+
+bool operator < (pair<int, void*>& a, pair<int, void*>& b) {//Перевантаження операторів порівняння
+  pair<int, int> l = t(a, b);
+  return l.first < l.second;
+}
+
+bool operator == (pair<int, void*>& a, pair<int, void*>& b) {
+  pair<int, int> l = t(a, b);
+  return l.first == l.second;
+}
+
+bool operator != (pair<int, void*>& a, pair<int, void*>& b) {
+  pair<int, int> l = t(a, b);
+  return l.first != l.second;
+}
+
+
+int oracle(vector<pair<int, void*>>& v) {          //Функція передбачення значення глобальної змінної
+  if (!v.size())return S;
+  int res = S;
+  reverse(v.begin(), v.end());
+  for (auto a : v) {
+    if (a.first == 1) { res = res - 2 * ((Alpha*)a.second)->N + 5; res = 3 * res + ((Alpha*)a.second)->N + 20; }
+    if (a.first == 2) { res = res - ((Beta*)a.second)->N; res = 3 * res + ((Beta*)a.second)->N + 20; }
+    if (a.first == 3) { res = res -((Gamma*)a.second)->N; res = res / 2 - ((Gamma*)a.second)->N; }
+    if (a.first == 4) { res = res + 3 * ((Delta*)a.second)->N - 20; res = res / 2 - ((Delta*)a.second)->N; }
+  }
+  reverse(v.begin(), v.end());
+  return res;
+}
+void foo() {                        //Тестова функція
+  shared_ptr<Alpha> alpha(new Alpha);
+  shared_ptr<Beta> beta1(new Beta);
+  shared_ptr<Beta> beta2(new Beta);
+  shared_ptr<Gamma> gamma(new Gamma);
+  shared_ptr<Delta> delta(new Delta);
+  cout << "S will be equal " << oracle(Base1::v) << endl;
+  Base1::v.clear();
+}
+
+int main() {
+  foo();
+  cout << "S = " << S << endl;
+  cout << "_____________________" << endl;
+  shared_ptr<Alpha> alpha(new Alpha);
+  shared_ptr<Beta> beta(new Beta);
+  shared_ptr<Gamma> gamma(new Gamma);
+  shared_ptr<Delta> delta(new Delta);
+  while (next_permutation(Base1::v.begin(), Base1::v.end()))//Перебір усіх варіантів
+  {
+    S = 100;
+    cout << "S will be equal |" << oracle(Base1::v) << endl;
+  }
+  return 0;
+}
