@@ -1,0 +1,73 @@
+#include "pch.h"
+#include <iostream>
+#include<cstdio>
+#include<algorithm>
+
+void initialization(int* mas, int kilk)
+{
+	int i = 0;
+	while (i != kilk)
+	{
+		std::cout << "Vvedit rozmir:";
+		std::cin >> mas[i];
+		i++;
+	}
+	std::cout << "Masuv zapovneno"<<std::endl;
+}
+void podil(int* boltu, int* gaiku, int beg, int end, int j, int kilk)
+{
+	int gaika = gaiku[j];
+	int rez = -1;
+	int end2 = end;
+	while ( beg <= end2)
+	{
+		if (boltu[beg] > gaika)
+		{
+			if (rez != -1)
+				beg++;
+			else
+			{
+			std::swap(boltu[beg], boltu[end2]);
+			end2--;
+			}
+			
+		}
+		else if (boltu[beg] < gaika)
+		{
+			if (rez != -1)
+			{
+			std::swap(boltu[beg], boltu[rez]);
+				rez = beg;
+			}
+			beg++;
+		}
+		else
+		{
+			rez = beg;
+			beg++;
+		}
+	}
+	std::cout << gaika << "-" << boltu[rez]<<"(" <<rez+1<<")"<< std::endl;
+	j++;
+	if (j != kilk)
+	{
+		if (gaiku[j] > boltu[rez])
+			podil(boltu, gaiku, rez, (kilk-1), j, kilk);
+		else
+			podil(boltu, gaiku, 0, rez, j, kilk);
+	}
+}
+int main()
+{
+	int kilk;
+	std::cin >> kilk;
+	int* gaiku=new int[kilk];
+	int* boltu = new int[kilk];
+	std::cout << "Gaiku"<<std::endl;
+	initialization(gaiku, kilk);
+	std::cout << "Boltu"<<std::endl;
+	initialization(boltu, kilk);
+	podil(boltu, gaiku,0,kilk-1,0,kilk);
+
+
+}
