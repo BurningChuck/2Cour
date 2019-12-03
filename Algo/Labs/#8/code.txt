@@ -1,0 +1,242 @@
+#include "pch.h"
+#include <iostream>
+#include <iostream>
+#include <string>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <map>
+#include <ctime>
+
+using namespace std;
+
+vector<int> computePrefixFunction(string s) {//префікс функція	
+	int n = s.size();
+	vector<int> pi(n);
+	for (int i = 1; i < n; i++) {
+		int j = pi[i - 1];
+		while (j > 0 && s[i] != s[j])
+			j = pi[j - 1];
+		if (s[i] == s[j])  ++j;
+		pi[i] = j;
+	}
+	return pi;
+}
+
+void naive(string text, string pattern)//наівний
+{
+	int n = text.length();
+	int m = pattern.length();
+	for (int s = 0; s <= n - m; s++)
+	{
+		string tmp;
+		tmp = text.substr(s, m);
+		if (pattern == tmp)
+			cout << s << ' ';
+	}
+	cout << "\n";
+}
+
+void Horspool(string text, string pattern, int previous = 0)//хорспула
+{
+	int n = text.length();
+	int m = pattern.length();
+	if (m > n) return;
+	map<char, int> table;
+	for (int i = m - 2; i >= 0; i--)
+	{
+		char tmp = pattern[i];
+		if (table[tmp] == NULL)
+			table[tmp] = m - i - 1;
+		if (i == 0)
+		{
+			tmp = pattern[m - 1];
+			if (table[tmp] == NULL)
+				table[tmp] = m;
+		}
+	}
+	int i = m - 1, j = i, k = i;
+	while (j >= 0 && i <= n - 1) {
+		j = m - 1;
+		k = i;
+		while (j >= 0 && text[k] == pattern[j]) {
+			k--;
+			j--;
+		}
+		if (table[text[i]] != NULL)
+			i += table[text[i]];
+		else
+			i += m;
+	}
+	if (k >= n - m) {
+		return;
+	}
+	else {
+		cout << k + 1 + previous << ' ';
+	}
+	Horspool(text.substr(k + 1 + m), pattern, k + 1 + m + previous);
+}
+
+void BoyerMoore(string text, string pattern, int previous = 0)//Бойера-Мура
+{
+	if (text.length() < pattern.length()) return;
+	int n = text.length();
+	int m = pattern.length();
+	if (m > n) return;
+	map<char, int> stopTable;
+	map<int, int> sufixTable;
+	for (int i = m - 2; i >= 0; i--)
+	{
+		char tmp = pattern[i];
+		if (stopTable[tmp] == NULL)
+			stopTable[tmp] = m - i - 1;
+		if (i == 0)
+		{
+			tmp = pattern[m - 1];
+			if (stopTable[tmp] == NULL)
+				stopTable[tmp] = m;
+		}
+	}
+	string reversePattern(pattern.rbegin(), pattern.rend());
+	vector<int> patternPrefix = computePrefixFunction(pattern), reversePrefix = computePrefixFunction(reversePattern);
+	for (int i = 0; i < m + 1; i++) {
+		sufixTable[i] = m - patternPrefix.back();
+	}
+	for (int i = 1; i < m; i++) {
+		int j = reversePrefix[i];
+		sufixTable[j] = min(sufixTable[j], i - reversePrefix[i] + 1);
+	}
+	for (int shift = 0; shift <= n - m;) {
+		int pos = m - 1;
+
+		while (pattern[pos] == text[pos + shift]) {
+			if (pos == 0)
+			{
+				cout << shift + previous << ' ';
+				BoyerMoore(text.substr(shift + m), pattern, shift + m + previous);
+				return;
+			}
+			--pos;
+		}
+
+		if (pos == m - 1) {
+			auto stop_symbol = stopTable.find(text[pos + shift]);
+			int stop_symbol_additional = pos - (stop_symbol != stopTable.end() ? stop_symbol->second : -1);
+			shift += stop_symbol_additional;
+		}
+		else {
+			shift += sufixTable[m - pos - 1];
+		}
+	}
+	return;
+}
+
+void KMP(string text, string pattern)// КПМ алгоритм
+{
+	int n = text.length();
+	int m = pattern.length();
+	string tmp = pattern + "#" + text;
+	vector<int> prefixFunc = computePrefixFunction(tmp);
+	for (int i = 0; i < tmp.size(); i++)
+	{
+		if (prefixFunc[i] == m)
+		{
+			cout << i - 2 * m << ' ';
+		}
+	}
+	cout << "\n";
+}
+
+void RabinKarp(string text, string pattern)//Рабіна-Карпа
+{
+	const int p = 31;
+	vector<long long> powersOfP(max(pattern.length(), text.length()));
+	powersOfP[0] = 1;
+	for (size_t i = 1; i < powersOfP.size(); ++i)
+		powersOfP[i] = powersOfP[i - 1] * p;
+
+	vector<long long> hash(text.length());
+	for (size_t i = 0; i < text.length(); ++i)
+	{
+		hash[i] = (text[i] - 'a' + 1) * powersOfP[i];
+		if (i)  hash[i] += hash[i - 1];
+	}
+
+	long long hash_s = 0;
+	for (size_t i = 0; i < pattern.length(); ++i)
+		hash_s += (pattern[i] - 'a' + 1) * powersOfP[i];
+
+	for (size_t i = 0; i + pattern.length() - 1 < text.length(); ++i)
+	{
+		long long current_hash = hash[i + pattern.length() - 1];
+		if (i)  current_hash -= hash[i - 1];
+		if (current_hash == hash_s * powersOfP[i])
+			cout << i << ' ';
+	}
+	cout << "\n";
+}
+
+
+int main()
+{
+	clock_t time1;
+	string s1, s2, s3, s4;
+	cin >> s1;
+	cin >> s2;
+	cin >> s3;
+	cin >> s4;
+	cout << "s1: " + s1 + "\n";
+	cout << "s2: " + s2 + "\n";
+	cout << "s3: " + s3 + "\n";
+	cout << "s4: " + s4 + "\n";
+	cout << "Naive method\n";
+	time1 = clock();
+	naive(s1, s2);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	time1 = clock();
+	naive(s3, s4);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	cout << "Rabin-Carp method\n";
+	time1 = clock();
+	RabinKarp(s1, s2);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	time1 = clock();
+	RabinKarp(s3, s4);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	cout << "Horspool method\n";
+	time1 = clock();
+	Horspool(s1, s2); 
+	cout << endl;
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	time1 = clock();
+	Horspool(s3, s4);
+	cout << endl;
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	cout << "KMP method\n";
+	time1 = clock();
+	KMP(s1, s2);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	time1 = clock();
+	KMP(s3, s4);
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	cout << "Boyer-Moore method\n";
+	time1 = clock();
+	BoyerMoore(s1, s2);
+	cout << endl;
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	time1 = clock();
+	BoyerMoore(s3, s4);
+ cout << endl;
+	time1 = clock() - time1;
+	cout << (double)time1 / CLOCKS_PER_SEC << endl;
+	return 0;
+}
